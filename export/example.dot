@@ -1,0 +1,8 @@
+graph {
+    martin--name
+    martin--job
+    martin--skills
+    tabitha--name
+    tabitha--job
+    tabitha--skills
+}

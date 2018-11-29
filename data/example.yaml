@@ -1,1 +1,17 @@
-foo: bar
+# Employee records
+-  anaelle:
+     name: Anaelle D'vloper
+     job: Developer
+     skills:
+     - python
+     - perl
+     - pascal
+-  lomma:
+     name: Lomma Bitumen
+     job: Developer
+     skills:
+     - lisp
+     - fortran
+     - erlang
+
+#from https://docs.ansible.com/ansible/latest/reference_appendices/YAMLSyntax.html
