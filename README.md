@@ -31,3 +31,7 @@ dot -Tpng export/viz.dot -o export/viz.png
 ## About the project
 
 DB Viz is a tool for generating DOT language for creating scheme with .yaml files configuration. 
+
+##Graphviz
+
+http://www.graphviz.org/documentation/
