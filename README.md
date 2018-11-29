@@ -2,7 +2,7 @@
 
 ## Install project
 
-The project is a Symfony 4 project. It doesn't use database.
+The project is a Symfony 4 project. It uses no database.
 
 ```
 git clone https://github.com/gdarquie/dbviz.git
