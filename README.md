@@ -22,7 +22,7 @@ php bin/console server:run
 
 Voilà!
 
-##Generate viz
+## Generate viz
 
 ```
 dot -Tpng export/viz.dot -o export/viz.png
