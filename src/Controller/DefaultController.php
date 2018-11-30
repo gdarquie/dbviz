@@ -29,9 +29,10 @@ class DefaultController extends Controller
                 $fileSystem->appendToFile('../export/viz.dot', array_keys($item)[0].'--'.array_keys($subitem)[0].PHP_EOL);
                 $fileSystem->appendToFile('../export/viz.dot', array_keys($item)[0].'--'.array_keys($subitem)[1].PHP_EOL);
                 $fileSystem->appendToFile('../export/viz.dot', array_keys($item)[0].'--'.array_keys($subitem)[2].PHP_EOL);
-
             }
         }
+
+        dump($parseFile);die;
 
         $this->closeFile($fileSystem);
 

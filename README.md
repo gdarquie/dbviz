@@ -24,6 +24,14 @@ Voilà!
 
 ## Generate viz
 
+### Install Graphviz
+
+```
+sudo apt-get install graphviz     
+```
+
+### Build png
+
 ```
 dot -Tpng export/viz.dot -o export/viz.png
 ```
