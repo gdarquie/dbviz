@@ -18,13 +18,10 @@ class DefaultController extends Controller
         $message = 'Nothing happens';
         $parseFile = Yaml::parseFile('../data/example.yaml');
 
-        $fileSystem = new Filesystem();
-        $fileSystem->dumpFile('../export/viz.dot', '');
-        $fileSystem->appendToFile('../export/viz.dot', 'graph {'.PHP_EOL);
-        $fileSystem->mkdir('../export');
-        $fileSystem->touch('../export/example.dot');
+        $fileSystem = $this->initFile();
+        $this->buildFile();
 
-
+        //change parse
         foreach ($parseFile as $item) {
 
             foreach ($item as $subitem) {
@@ -36,11 +33,32 @@ class DefaultController extends Controller
             }
         }
 
-        $fileSystem->appendToFile('../export/viz.dot', '}');
+        $this->closeFile($fileSystem);
 
         return new JsonResponse($message);
     }
 
+    private function initFile()
+    {
+        $fileSystem = new Filesystem();
+        $fileSystem->dumpFile('../export/viz.dot', '');
+        $fileSystem->appendToFile('../export/viz.dot', 'graph {'.PHP_EOL);
+        $fileSystem->mkdir('../export');
+        $fileSystem->touch('../export/example.dot');
+
+        return $fileSystem;
+    }
+
+    private function buildFile()
+    {
+
+    }
+
+    private function closeFile($fileSystem)
+    {
+        $result = $fileSystem->appendToFile('../export/viz.dot', '}');
+        return $result;
+    }
 
 
 }
