@@ -16,29 +16,38 @@ class DefaultController extends Controller
     public function index()
     {
         $message = 'Nothing happens';
-        $parseFile = Yaml::parseFile('../data/example.yaml');
 
+        $parseFile = Yaml::parseFile('../data/example-fixtures.yaml');
         $fileSystem = $this->initFile();
         $this->buildFile();
 
-        //change parse
-        foreach ($parseFile as $item) {
-
-            foreach ($item as $subitem) {
-
-                $fileSystem->appendToFile('../export/viz.dot', array_keys($item)[0].'--'.array_keys($subitem)[0].PHP_EOL);
-                $fileSystem->appendToFile('../export/viz.dot', array_keys($item)[0].'--'.array_keys($subitem)[1].PHP_EOL);
-                $fileSystem->appendToFile('../export/viz.dot', array_keys($item)[0].'--'.array_keys($subitem)[2].PHP_EOL);
+        //level 1
+        $subkeys = [];
+        foreach ($parseFile as $key => $value) {
+            $key = $this->escape($key);
+            foreach ($value as $subkey => $subvalue) {
+                array_push($subkeys, $subkey);
+                $subkey = $this->escape($subkey);
+                $fileSystem->appendToFile('../export/viz.dot', $key.'--'.$subkey.PHP_EOL);
             }
         }
 
-        dump($parseFile);die;
+        //level 2
+        foreach ($parseFile as $item) {
+            foreach ($subkeys as $key) {
+                if(array_key_exists($key, $item)) {
+                    $this->getKeys($item[$key]);
+                }
+            }
+        }
 
-        $this->closeFile($fileSystem);
-
+        $fileSystem = $this->closeFile($fileSystem);
         return new JsonResponse($message);
     }
 
+    /**
+     * @return Filesystem
+     */
     private function initFile()
     {
         $fileSystem = new Filesystem();
@@ -55,11 +64,40 @@ class DefaultController extends Controller
 
     }
 
+    /**
+     * @param Filesystem $fileSystem
+     * @return Filesystem
+     */
     private function closeFile($fileSystem)
     {
-        $result = $fileSystem->appendToFile('../export/viz.dot', '}');
-        return $result;
+        $fileSystem->appendToFile('../export/viz.dot', '}');
+        return $fileSystem;
     }
 
+    /**
+     * @param $string
+     * @return null|string|string[]
+     */
+    private function escape($string)
+    {
+        return $result = preg_replace("#[\\\-]#", "", "$string");
+    }
+
+    /**
+     * @param $array
+     */
+    private function getKeys($array)
+    {
+        foreach ($array as $key => $value) {
+            dump($key);
+        }
+    }
+
+
+    private function addDotNodeIntoFile($fileSystem, $origin, $target)
+    {
+        $fileSystem->appendToFile('../export/viz.dot', $origin.'--'.$target.PHP_EOL);
+        return $fileSystem;
+    }
 
 }
