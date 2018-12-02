@@ -10,39 +10,25 @@ use Symfony\Component\Yaml\Yaml;
 
 class DefaultController extends Controller
 {
+
+    private $message = 'Nothing happens';
+
+    private $nbLines = 0;
+
+    private $level = 0;
+
      /**
       * @Route("/", methods={"GET","HEAD"}, name="home")
       */
     public function index()
     {
-        $message = 'Nothing happens';
-
-        $parseFile = Yaml::parseFile('../data/example-fixtures.yaml');
+        $parseFile = Yaml::parseFile('../data/example.yaml');
         $fileSystem = $this->initFile();
-        $this->buildFile();
+        $this->parse($fileSystem, $parseFile);
+        $this->closeFile($fileSystem);
+        $this->message = $this->rapport();
 
-        //level 1
-        $subkeys = [];
-        foreach ($parseFile as $key => $value) {
-            $key = $this->escape($key);
-            foreach ($value as $subkey => $subvalue) {
-                array_push($subkeys, $subkey);
-                $subkey = $this->escape($subkey);
-                $fileSystem->appendToFile('../export/viz.dot', $key.'--'.$subkey.PHP_EOL);
-            }
-        }
-
-        //level 2
-        foreach ($parseFile as $item) {
-            foreach ($subkeys as $key) {
-                if(array_key_exists($key, $item)) {
-                    $this->getKeys($item[$key]);
-                }
-            }
-        }
-
-        $fileSystem = $this->closeFile($fileSystem);
-        return new JsonResponse($message);
+        return new JsonResponse($this->message);
     }
 
     /**
@@ -57,11 +43,6 @@ class DefaultController extends Controller
         $fileSystem->touch('../export/example.dot');
 
         return $fileSystem;
-    }
-
-    private function buildFile()
-    {
-
     }
 
     /**
@@ -80,24 +61,58 @@ class DefaultController extends Controller
      */
     private function escape($string)
     {
-        return $result = preg_replace("#[\\\-]#", "", "$string");
+        return $result = preg_replace("#[&\\\-]#", "", "$string");
     }
 
     /**
-     * @param $array
+     * @param $fileSystem
+     * @param $origin
+     * @param $target
+     * @return mixed
      */
-    private function getKeys($array)
-    {
-        foreach ($array as $key => $value) {
-            dump($key);
-        }
-    }
-
-
     private function addDotNodeIntoFile($fileSystem, $origin, $target)
     {
         $fileSystem->appendToFile('../export/viz.dot', $origin.'--'.$target.PHP_EOL);
-        return $fileSystem;
+        $this->nbLines++;
+    }
+
+    private function parse($fileSystem, $parseFile, $maxLevel = 500)
+    {
+        $this->level++;
+        if($this->level > $maxLevel ) {
+            return;
+        }
+
+        foreach ($parseFile as $key => $value) {
+            if (gettype($value) === 'array')
+            {
+                $origin = $this->escape($key);
+                foreach ($value as $rowkey => $rowvalue) {
+                    if (gettype($value) === 'array')
+                    {
+                        $target = $this->escape($rowkey);
+                        $this->parse($fileSystem, $value);
+
+
+
+                    }
+                    else {
+                        $target = $this->escape($rowvalue);
+                    }
+                    $this->addDotNodeIntoFile($fileSystem, $origin, $target);
+                }
+            }
+        }
+
+
+        return $this->level;
+    }
+
+    /**
+     * @return string
+     */
+    private function rapport() {
+        return $this->nbLines.' lignes ont été ajoutées.';
     }
 
 }
