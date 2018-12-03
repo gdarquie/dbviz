@@ -10,11 +10,19 @@ use Symfony\Component\Yaml\Yaml;
 
 class DefaultController extends Controller
 {
-
+    /**
+     * @var string
+     */
     private $message = 'Nothing happens';
 
+    /**
+     * @var int
+     */
     private $nbLines = 0;
 
+    /**
+     * @var int
+     */
     private $level = 0;
 
      /**
@@ -23,12 +31,13 @@ class DefaultController extends Controller
     public function index()
     {
         $parseFile = Yaml::parseFile('../data/example.yaml');
+        $parseFile = $this->transformArray($parseFile);
+
         $fileSystem = $this->initFile();
         $this->parse($fileSystem, $parseFile);
         $this->closeFile($fileSystem);
-        $this->message = $this->rapport();
 
-        return new JsonResponse($this->message);
+        return new JsonResponse($this->rapport());
     }
 
     /**
@@ -65,36 +74,59 @@ class DefaultController extends Controller
     }
 
     /**
-     * @param $fileSystem
-     * @param $origin
-     * @param $target
-     * @return mixed
+     * @param Filesystem $fileSystem
+     * @param string $origin
+     * @param string $target
      */
-    private function addDotNodeIntoFile($fileSystem, $origin, $target)
+    private function addDotNodeIntoFile(Filesystem $fileSystem, string $origin, string $target)
     {
         $fileSystem->appendToFile('../export/viz.dot', $origin.'--'.$target.PHP_EOL);
         $this->nbLines++;
     }
 
-    private function parse($fileSystem, $parseFile, $maxLevel = 500)
+    public function transformArray(Array $parseFile)
+    {
+        $transformedArray = [];
+
+        foreach ($parseFile as $key => $value) {
+
+            if ($this->isArray($value)) {
+                $transformedArray += $this->compressArray($value, $key);
+                //attention / récursif / mettre une limite
+                $this->transformArray($value);
+            }
+            else {
+                $transformedArray[$key] = $value;
+            }
+        }
+
+        return $transformedArray;
+    }
+
+    /**
+     * @param $fileSystem
+     * @param $parseFile
+     * @param int $maxLevel
+     * @return int|void
+     */
+    private function parse($fileSystem, array $parseFile, $maxLevel = 500)
     {
         $this->level++;
-        if($this->level > $maxLevel ) {
+        if($this->level > $maxLevel) {
             return;
         }
 
         foreach ($parseFile as $key => $value) {
+
+            $origin = $this->escape($key);
+
             if (gettype($value) === 'array')
             {
-                $origin = $this->escape($key);
                 foreach ($value as $rowkey => $rowvalue) {
                     if (gettype($value) === 'array')
                     {
                         $target = $this->escape($rowkey);
                         $this->parse($fileSystem, $value);
-
-
-
                     }
                     else {
                         $target = $this->escape($rowvalue);
@@ -102,17 +134,66 @@ class DefaultController extends Controller
                     $this->addDotNodeIntoFile($fileSystem, $origin, $target);
                 }
             }
+            else {
+                $this->addDotNodeIntoFile($fileSystem, $origin, $this->escape($value));
+            }
         }
-
 
         return $this->level;
     }
 
     /**
-     * @return string
+     * @param array $array
+     * @return array
      */
-    private function rapport() {
-        return $this->nbLines.' lignes ont été ajoutées.';
+    private function compressArray(array $array, string $parent)
+    {
+        $transformedArray = $array;
+
+        if (gettype(array_keys($array)[0]) === 'integer') {
+
+            $transformedArray = [];
+
+            foreach ($array as $key => $value) {
+                //pb ici : comment avoir trois objets du même parent?
+                $transformedArray[$parent] = $value;
+
+            }
+        }
+
+        return $transformedArray;
+
     }
 
+    /**
+     * @param $object
+     * @return bool
+     */
+    private function isArray($object) {
+        return gettype($object) === 'array';
+    }
+
+    /**
+     * @return string
+     */
+    private function rapport()
+    {
+        if($this->nbLines > 0) {
+            $this->message = $this->nbLines.' lignes ont été ajoutées.';
+        }
+        return $this->message;
+    }
+
+//    private function generatePng()
+//    {
+//
+//    }
+
 }
+
+
+// todo :
+//- pouvoir exclure des noeuds (ne prendre en compte que les noeuds spécifiés)
+//- enclencher directement la commande pour la génération de png : https://symfony.com/doc/4.1/components/process.html
+//- pouvoir ajouter son code par un formulaire
+//- déployer
