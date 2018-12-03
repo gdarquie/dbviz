@@ -1,6 +1,20 @@
 graph {
---
---
---
---
+origin--anaelle
+origin--lomma
+anaelle--name
+anaelle--job
+anaelle--skills
+name--Anaelle Devloper
+job--Developer
+skills--python
+skills--perl
+skills--pascal
+lomma--name
+lomma--job
+lomma--skills
+name--Lomma Bitumen
+job--Developer
+skills--lisp
+skills--fortran
+skills--erlang
 }

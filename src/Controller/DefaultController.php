@@ -31,11 +31,8 @@ class DefaultController extends Controller
     public function index()
     {
         $parseFile = Yaml::parseFile('../data/example.yaml');
-//        $parseFile = $this->transformArray($parseFile);
-        $parseFile = $this->transform($parseFile);
-
         $fileSystem = $this->initFile();
-        $this->parse($fileSystem, $parseFile);
+        $this->transform($parseFile, $fileSystem);
         $this->closeFile($fileSystem);
 
         return new JsonResponse($this->rapport());
@@ -75,6 +72,7 @@ class DefaultController extends Controller
     private function escape($string)
     {
         return $result = preg_replace("#[;.&\\\-]#", "", "$string");
+        // | et space
     }
 
     /**
@@ -89,97 +87,54 @@ class DefaultController extends Controller
     }
 
     /**
-     * @param array $parseFile
-     *
-     * @return array
-     */
-    public function transformArray(Array $parseFile)
-    {
-        $transformedArray = [];
-
-        foreach ($parseFile as $key => $value) {
-
-//            if ($this->isArray($value)) {
-//                dump($parseFile);
-//                dump($value);die;
-//                $transformedArray = $this->transformArray($value);
-//                dump($transformedArray);die;
-//
-//                $transformedArray += $this->compressArray($value, $key);
-//                //attention / récursif / mettre une limite
-//                dump($transformedArray);
-//
-//            }
-//            else {
-//                $transformedArray[$key] = $value;
-//            }
-        }
-
-        return $transformedArray;
-    }
-
-    public function transform($array)
-    {
-        if (!is_array($array)) {
-            dump($array);
-            return;
-        }
-        $helper = [];
-        foreach ($array as $key => $value) {
-//            dump($value);
-            $helper[$this->transform($key)] = is_array($value) ? $this->transform($value) : $this->transform($value);
-        }
-
-        return $helper;
-    }
-
-
-
-
-public function reformat($data)
-    {
-        dump($data);
-    }
-
-
-    /**
-     * @param $fileSystem
-     * @param $parseFile
+     * @param array $array
+     * @param Filesystem $fileSystem
+     * @param string $parentKey
      * @param int $maxLevel
-     * @return int|void
+     * @return bool|void
      */
-    private function parse($fileSystem, array $parseFile, $maxLevel = 500)
+    public function transform(Array $array, Filesystem $fileSystem, string $parentKey = 'origin', $maxLevel = 100)
     {
         $this->level++;
+
         if($this->level > $maxLevel) {
             return;
         }
 
-        foreach ($parseFile as $key => $value) {
+        foreach ($array as $key => $value) {
 
-            $origin = $this->escape($key);
+            if (is_array($value)) {
 
-            if (gettype($value) === 'array')
-            {
-                foreach ($value as $rowkey => $rowvalue) {
-                    if (gettype($value) === 'array')
-                    {
-                        $target = $this->escape($rowkey);
-                        $this->parse($fileSystem, $value);
+                foreach ($value as $subKey => $item) {
+                    if (!is_integer($subKey)) {
+                        $origin = $this->escape($key);
+                        $target = $this->escape($subKey);
+                        $this->addDotNodeIntoFile($fileSystem, $origin, $target);
                     }
-                    else {
-                        $target = $this->escape($rowvalue);
-                    }
+                }
+                $this->transform($value, $fileSystem, $key);
+            }
+
+            else {
+                $target = $this->escape($value);
+
+                if(is_integer(array_keys($array)[0])) {
+                    $origin = $this->escape($parentKey);
                     $this->addDotNodeIntoFile($fileSystem, $origin, $target);
                 }
+                else{
+                    $origin = $this->escape($key);
+                    $this->addDotNodeIntoFile($fileSystem, $origin, $target);
+                }
+
             }
-            else {
-                $this->addDotNodeIntoFile($fileSystem, $origin, $this->escape($value));
-            }
+
+
         }
 
-        return $this->level;
+        return true;
     }
+
 
     /**
      * @param array $array
@@ -218,7 +173,7 @@ public function reformat($data)
     private function rapport()
     {
         if($this->nbLines > 0) {
-            $this->message = $this->nbLines.' lignes ont été ajoutées.';
+            $this->message = $this->nbLines.' lignes ont été ajoutées.'.$this->level.' niveaux ont été parsés.';
         }
         return $this->message;
     }

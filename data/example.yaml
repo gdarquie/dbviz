@@ -1,17 +1,18 @@
 # Employee records
--  anaelle:
-     name: Anaelle Devloper
-     job: Developer
-     skills:
-     - python
-     - perl
-     - pascal
--  lomma:
-     name: Lomma Bitumen
-     job: Developer
-     skills:
-     - lisp
-     - fortran
-     - erlang
+origin:
+     anaelle:
+          name: Anaelle Devloper
+          job: Developer
+          skills:
+          - python
+          - perl
+          - pascal
+     lomma:
+          name: Lomma Bitumen
+          job: Developer
+          skills:
+          - lisp
+          - fortran
+          - erlang
 
 #from https://docs.ansible.com/ansible/latest/reference_appendices/YAMLSyntax.html
