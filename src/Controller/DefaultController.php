@@ -25,13 +25,14 @@ class DefaultController extends Controller
      */
     private $level = 0;
 
-     /**
-      * @Route("/", methods={"GET","HEAD"}, name="home")
-      */
+    /**
+     * @Route("/", methods={"GET","HEAD"}, name="home")
+     */
     public function index()
     {
         $parseFile = Yaml::parseFile('../data/example.yaml');
-        $parseFile = $this->transformArray($parseFile);
+//        $parseFile = $this->transformArray($parseFile);
+        $parseFile = $this->transform($parseFile);
 
         $fileSystem = $this->initFile();
         $this->parse($fileSystem, $parseFile);
@@ -47,7 +48,7 @@ class DefaultController extends Controller
     {
         $fileSystem = new Filesystem();
         $fileSystem->dumpFile('../export/viz.dot', '');
-        $fileSystem->appendToFile('../export/viz.dot', 'graph {'.PHP_EOL);
+        $fileSystem->appendToFile('../export/viz.dot', 'graph {' . PHP_EOL);
         $fileSystem->mkdir('../export');
         $fileSystem->touch('../export/example.dot');
 
@@ -56,52 +57,90 @@ class DefaultController extends Controller
 
     /**
      * @param Filesystem $fileSystem
+     *
      * @return Filesystem
      */
     private function closeFile($fileSystem)
     {
         $fileSystem->appendToFile('../export/viz.dot', '}');
+
         return $fileSystem;
     }
 
     /**
      * @param $string
+     *
      * @return null|string|string[]
      */
     private function escape($string)
     {
-        return $result = preg_replace("#[&\\\-]#", "", "$string");
+        return $result = preg_replace("#[;.&\\\-]#", "", "$string");
     }
 
     /**
      * @param Filesystem $fileSystem
-     * @param string $origin
-     * @param string $target
+     * @param string     $origin
+     * @param string     $target
      */
     private function addDotNodeIntoFile(Filesystem $fileSystem, string $origin, string $target)
     {
-        $fileSystem->appendToFile('../export/viz.dot', $origin.'--'.$target.PHP_EOL);
+        $fileSystem->appendToFile('../export/viz.dot', $origin . '--' . $target . PHP_EOL);
         $this->nbLines++;
     }
 
+    /**
+     * @param array $parseFile
+     *
+     * @return array
+     */
     public function transformArray(Array $parseFile)
     {
         $transformedArray = [];
 
         foreach ($parseFile as $key => $value) {
 
-            if ($this->isArray($value)) {
-                $transformedArray += $this->compressArray($value, $key);
-                //attention / récursif / mettre une limite
-                $this->transformArray($value);
-            }
-            else {
-                $transformedArray[$key] = $value;
-            }
+//            if ($this->isArray($value)) {
+//                dump($parseFile);
+//                dump($value);die;
+//                $transformedArray = $this->transformArray($value);
+//                dump($transformedArray);die;
+//
+//                $transformedArray += $this->compressArray($value, $key);
+//                //attention / récursif / mettre une limite
+//                dump($transformedArray);
+//
+//            }
+//            else {
+//                $transformedArray[$key] = $value;
+//            }
         }
 
         return $transformedArray;
     }
+
+    public function transform($array)
+    {
+        if (!is_array($array)) {
+            dump($array);
+            return;
+        }
+        $helper = [];
+        foreach ($array as $key => $value) {
+//            dump($value);
+            $helper[$this->transform($key)] = is_array($value) ? $this->transform($value) : $this->transform($value);
+        }
+
+        return $helper;
+    }
+
+
+
+
+public function reformat($data)
+    {
+        dump($data);
+    }
+
 
     /**
      * @param $fileSystem
